@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>My Rust + Webpack project!</title>
+    <style>
+      body {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      #green-square {
+        width: 20px;
+        height: 20px;
+        background-color: green;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+    <script defer src="index.js"></script>
+  </head>
+  <body>
+    <header>🦀⚙️</header>
+    <div id="loading">loading</div>
+    <div id="current-time" style="color: red">current-time</div>
+    <div id="num-clicks">_</div>
+    <div id="green-square"></div>
+  </body>
+</html>
