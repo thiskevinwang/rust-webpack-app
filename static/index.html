@@ -14,22 +14,14 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-      }
-      #green-square {
-        width: 20px;
-        height: 20px;
-        background-color: green;
-        border-radius: 4px;
-        cursor: pointer;
+        user-select: none;
       }
     </style>
     <script defer src="index.js"></script>
   </head>
   <body>
-    <header>🦀⚙️</header>
-    <div id="loading">loading</div>
-    <div id="current-time" style="color: red">current-time</div>
-    <div id="num-clicks">_</div>
-    <div id="green-square"></div>
+    <header>⚙️ + 🕸</header>
+    <button id="play" type="button">▶️</button>
+    <div id="piano" />
   </body>
 </html>
