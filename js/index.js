@@ -1,5 +1,10 @@
 import("../pkg")
-  .then((rust_module) => {
-    console.log("rust_module", rust_module);
+  .then((mod) => {
+    console.log("mod", mod);
+    mod.start_websocket();
+    mod
+      .fetch("thiskevinwang/coffee-code-climb")
+      .then((res) => console.log("res", res))
+      .catch((err) => console.error("err", err));
   })
   .catch(console.error);
