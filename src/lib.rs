@@ -34,53 +34,6 @@ pub fn start() -> Result<(), JsValue> {
     canvas.style().set_property("margin", "auto")?;
 
     document.body().unwrap().append_child(&canvas)?;
-
-    let context = canvas
-        .get_context("2d")?
-        .unwrap()
-        .dyn_into::<web_sys::CanvasRenderingContext2d>()?;
-    let context = Rc::new(context);
-    let pressed = Rc::new(Cell::new(false));
-
-    {
-        let context = context.clone();
-        let pressed = pressed.clone();
-        let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-            context.begin_path();
-            context.move_to(event.offset_x() as f64, event.offset_y() as f64);
-            pressed.set(true);
-        }) as Box<dyn FnMut(_)>);
-        canvas.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
-        closure.forget();
-    }
-
-    {
-        let context = context.clone();
-        let pressed = pressed.clone();
-        let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-            if pressed.get() {
-                context.line_to(event.offset_x() as f64, event.offset_y() as f64);
-                context.stroke();
-                context.begin_path();
-                context.move_to(event.offset_x() as f64, event.offset_y() as f64);
-            }
-        }) as Box<dyn FnMut(_)>);
-        canvas.add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
-        closure.forget();
-    }
-
-    {
-        let context = context.clone();
-        let pressed = pressed.clone();
-        let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
-            pressed.set(false);
-            context.line_to(event.offset_x() as f64, event.offset_y() as f64);
-            context.stroke();
-        }) as Box<dyn FnMut(_)>);
-        canvas.add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
-        closure.forget();
-    }
-
     Ok(())
 }
 
@@ -109,43 +62,11 @@ pub fn start_websocket() -> Result<(), JsValue> {
     let context = Rc::new(context);
     // Connect to an echo server
     let ws = WebSocket::new("ws://localhost:3000/chat")?;
-    // For small binary messages, like CBOR, Arraybuffer is more efficient than Blob handling
-    ws.set_binary_type(web_sys::BinaryType::Arraybuffer);
-    // create callback
     {
-        let cloned_ws = ws.clone();
+        // Process incoming messages
+        let context = context.clone();
         let onmessage_callback = Closure::wrap(Box::new(move |e: MessageEvent| {
-            // Handle difference Text/Binary,...
-            if let Ok(abuf) = e.data().dyn_into::<js_sys::ArrayBuffer>() {
-                console_log!("message event, received arraybuffer: {:?}", abuf);
-                let array = js_sys::Uint8Array::new(&abuf);
-                let len = array.byte_length() as usize;
-                console_log!("Arraybuffer received {}bytes: {:?}", len, array.to_vec());
-                // here you can for example use Serde Deserialize decode the message
-                // for demo purposes we switch back to Blob-type and send off another binary message
-                cloned_ws.set_binary_type(web_sys::BinaryType::Blob);
-                match cloned_ws.send_with_u8_array(&vec![5, 6, 7, 8]) {
-                    Ok(_) => console_log!("binary message successfully sent"),
-                    Err(err) => console_log!("error sending message: {:?}", err),
-                }
-            } else if let Ok(blob) = e.data().dyn_into::<web_sys::Blob>() {
-                console_log!("message event, received blob: {:?}", blob);
-                // better alternative to juggling with FileReader is to use https://crates.io/crates/gloo-file
-                let fr = web_sys::FileReader::new().unwrap();
-                let fr_c = fr.clone();
-                // create onLoadEnd callback
-                let onloadend_cb = Closure::wrap(Box::new(move |_e: web_sys::ProgressEvent| {
-                    let array = js_sys::Uint8Array::new(&fr_c.result().unwrap());
-                    let len = array.byte_length() as usize;
-                    console_log!("Blob received {}bytes: {:?}", len, array.to_vec());
-                    // here you can for example use the received image/png data
-                })
-                    as Box<dyn FnMut(web_sys::ProgressEvent)>);
-                fr.set_onloadend(Some(onloadend_cb.as_ref().unchecked_ref()));
-                fr.read_as_array_buffer(&blob).expect("blob not readable");
-                onloadend_cb.forget();
-            } else if let Ok(txt) = e.data().dyn_into::<js_sys::JsString>() {
-                // console_log!("message event, received Text: {:?}", txt);
+            if let Ok(txt) = e.data().dyn_into::<js_sys::JsString>() {
                 console_log!("{:?}", txt);
                 let vec: js_sys::Array = txt.split(": ");
 
@@ -155,17 +76,15 @@ pub fn start_websocket() -> Result<(), JsValue> {
                     user_string.retain(|c| c.is_numeric()); // "14"
                     let user_id = user_string.parse::<i32>().unwrap(); // 14
 
-                    console_log!("{:?}", user_id);
-
-                    // Even users are blue
-                    // Odd are red
-                    match user_id % 2 {
-                        0 => {
-                            context.set_stroke_style(&JsValue::from_str("blue"));
-                        }
-                        _ => {
-                            context.set_stroke_style(&JsValue::from_str("red"));
-                        }
+                    // Set special colors for incoming messages
+                    console_log!("setting stroke color...");
+                    match user_id % 5 {
+                        0 => context.set_stroke_style(&JsValue::from_str("Tomato")),
+                        1 => context.set_stroke_style(&JsValue::from_str("Orange")),
+                        2 => context.set_stroke_style(&JsValue::from_str("MediumSeaGreen")),
+                        3 => context.set_stroke_style(&JsValue::from_str("DodgerBlue")),
+                        4 => context.set_stroke_style(&JsValue::from_str("RebeccaPurple")),
+                        _ => context.set_stroke_style(&JsValue::from_str("Gray")),
                     }
                 }
 
@@ -204,6 +123,7 @@ pub fn start_websocket() -> Result<(), JsValue> {
     }
 
     {
+        // Process errors
         let onerror_callback = Closure::wrap(Box::new(move |e: ErrorEvent| {
             console_log!("error event: {:?}", e);
         }) as Box<dyn FnMut(ErrorEvent)>);
@@ -212,22 +132,76 @@ pub fn start_websocket() -> Result<(), JsValue> {
     }
 
     {
+        // Do stuff when websocket connection is opened
+        // Like attach mouse move handlers
         let cloned_ws = ws.clone();
         let onopen_callback = Closure::wrap(Box::new(move |_| {
             console_log!("socket opened");
 
-            match cloned_ws.send_with_str("ping") {
+            match cloned_ws.send_with_str("OPENED") {
                 Ok(_) => console_log!("message successfully sent"),
-                Err(err) => console_log!("error sending message: {:?}", err),
-            }
-            // send off binary message
-            match cloned_ws.send_with_u8_array(&vec![0, 1, 2, 3]) {
-                Ok(_) => console_log!("binary message successfully sent"),
                 Err(err) => console_log!("error sending message: {:?}", err),
             }
         }) as Box<dyn FnMut(JsValue)>);
 
         ws.set_onopen(Some(onopen_callback.as_ref().unchecked_ref()));
+
+        let pressed = Rc::new(Cell::new(false));
+
+        {
+            // ON MOUSE DOWN
+            let context = context.clone();
+            let pressed = pressed.clone();
+            let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+                context.set_stroke_style(&JsValue::from_str("black"));
+                context.begin_path();
+                context.move_to(event.offset_x() as f64, event.offset_y() as f64);
+                pressed.set(true);
+            }) as Box<dyn FnMut(_)>);
+            canvas
+                .add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
+            closure.forget();
+        }
+
+        {
+            // ON MOUSE MOVE
+            let context = context.clone();
+            let pressed = pressed.clone();
+            let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+                let cloned_ws = ws.clone();
+                if pressed.get() {
+                    // DRAW
+                    context.set_stroke_style(&JsValue::from_str("black"));
+                    context.line_to(event.offset_x() as f64, event.offset_y() as f64);
+                    context.stroke();
+                    context.begin_path();
+                    context.move_to(event.offset_x() as f64, event.offset_y() as f64);
+                }
+                // SEND WS MESSAGE
+                // remember to offset the event coordinates
+                let x = event.offset_x() as f64 - 320.0;
+                let y = event.offset_y() as f64 - 240.0;
+                cloned_ws.send_with_str(&format!("{:?},{:?},{:?}", x, y, pressed.get()));
+            }) as Box<dyn FnMut(_)>);
+            canvas
+                .add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
+            closure.forget();
+        }
+
+        {
+            // ON MOUSE UP
+            let context = context.clone();
+
+            let pressed = pressed.clone();
+            let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+                pressed.set(false);
+                context.set_stroke_style(&JsValue::from_str("black"));
+                context.line_to(event.offset_x() as f64, event.offset_y() as f64);
+                context.stroke();
+            }) as Box<dyn FnMut(_)>);
+            canvas.add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
+            closure.forget();
+        }
 
         onopen_callback.forget();
     }

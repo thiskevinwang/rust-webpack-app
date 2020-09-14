@@ -5,13 +5,19 @@
     <title>My Rust + Webpack project!</title>
     <script defer src="index.js"></script>
   </head>
-  <body style="margin: 0; display: grid">
+  <body style="margin: 0; display: grid; position: relative">
     <header
       style="
+        position: absolute;
         display: flex;
         align-items: center;
-        margin-bottom: 1rem;
+        left: 50vw;
+        top: 50vh;
+        transform: translate(-50%, -50%);
         justify-content: center;
+        opacity: 15%;
+        user-select: none;
+        pointer-events: none;
       "
     >
       <img
