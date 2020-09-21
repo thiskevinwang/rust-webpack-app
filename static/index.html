@@ -3,25 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <title>My Rust + Webpack project!</title>
-    <style>
-      body {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        user-select: none;
-      }
-    </style>
     <script defer src="index.js"></script>
   </head>
-  <body>
-    <header>⚙️ + 🕸</header>
-    <button id="play" type="button">▶️</button>
-    <div id="piano" />
+  <body style="margin: 0; display: grid; position: relative">
+    <header
+      style="
+        position: absolute;
+        display: flex;
+        align-items: center;
+        left: 50vw;
+        top: 50vh;
+        transform: translate(-50%, -50%);
+        justify-content: center;
+        opacity: 15%;
+        user-select: none;
+        pointer-events: none;
+      "
+    >
+      <img
+        height="80"
+        width="80"
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Rust_programming_language_black_logo.svg/200px-Rust_programming_language_black_logo.svg.png"
+      />
+      <img
+        height="80"
+        width="80"
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Plus_symbol.svg/200px-Plus_symbol.svg.png"
+      />
+      <img
+        height="80"
+        width="80"
+        src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/WebAssembly_Logo.svg/200px-WebAssembly_Logo.svg.png"
+      />
+    </header>
   </body>
 </html>

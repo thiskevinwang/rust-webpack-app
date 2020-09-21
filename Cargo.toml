@@ -23,36 +23,50 @@ lto = true
 [dependencies]
 # The `wasm-bindgen` crate provides the bare minimum functionality needed
 # to interact with JavaScript.
-wasm-bindgen = "0.2.45"
-wasm-bindgen-futures = "0.4.17"
+# wasm-bindgen = "0.2.45"
+# wasm-bindgen-futures = "0.4.17"
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. However, it is slower than the default
 # allocator, so it's not enabled by default.
 wee_alloc = { version = "0.4.2", optional = true }
+wasm-bindgen = { version = "0.2.68", features = ["serde-serialize"] }
+js-sys = "0.3.45"
+wasm-bindgen-futures = { version = "0.4.18", features = [] }
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "^1.0"
 
 # The `web-sys` crate allows you to interact with the various browser APIs,
 # like the DOM.
 [dependencies.web-sys]
-version = "0.3.4"
+version = "0.3.45"
 features = [
-  'console',
-  'Document',
-  'Element',
-  'HtmlElement',
-  'Node',
-  'Window',
-  'CssStyleDeclaration',
-  'AudioContext',
-  'AudioDestinationNode',
-  'AudioNode',
-  'AudioParam',
-  'GainNode',
-  'OscillatorNode',
-  'OscillatorType',
+  # https://rustwasm.github.io/wasm-bindgen/examples/paint.html
+  "CanvasRenderingContext2d",
+  "CssStyleDeclaration",
+  "Document",
+  "Element",
+  "EventTarget",
+  "HtmlCanvasElement",
+  "HtmlElement",
+  "MouseEvent",
+  "Node",
+  "Window",
+  # https://rustwasm.github.io/wasm-bindgen/examples/websockets.html
+  "BinaryType",
+  "Blob",
+  "ErrorEvent",
+  "FileReader",
+  "MessageEvent",
+  "ProgressEvent",
+  "WebSocket",
+  # https://rustwasm.github.io/docs/wasm-bindgen/examples/fetch.html
+  "Headers",
+  "Request",
+  "RequestInit",
+  "RequestMode",
+  "Response",
+  "Window",
 ]
-
-[dependencies.js-sys]
-version = "0.3.44"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
